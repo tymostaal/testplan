@@ -10,13 +10,13 @@
   <!-- Include SortableJS for drag-and-drop -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <style>
-    /* Draggable row styling and light hover effect */
+    /* Draggable row styling with light hover effect */
     tr.draggable {
       transition: background-color 0.2s ease;
     }
     tr.draggable:hover {
       cursor: grab;
-      background-color: #f3f4f6; /* Very light gray */
+      background-color: #f3f4f6; /* very light gray */
     }
     tr.draggable:active {
       cursor: grabbing;
@@ -38,11 +38,11 @@
     #library-container.closed #library-sidebar {
       opacity: 0;
     }
-    /* Toggle button (inside sidebar container) remains visible */
+    /* Toggle button stays visible */
     #library-toggle {
       left: -2rem;
     }
-    /* Modal overlay */
+    /* Modal overlay styles */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -52,6 +52,7 @@
       justify-content: center;
       z-index: 50;
     }
+    .hidden { display: none; }
   </style>
 </head>
 <body class="bg-gray-100 text-xs overflow-x-hidden">
@@ -60,7 +61,6 @@
   
   <!-- Main flex container -->
   <div class="flex min-h-screen">
-    
     <!-- Left Sidebar -->
     <div class="w-1/6 bg-white border-r p-2">
       {% include "components/sidebar.html" %}
@@ -91,7 +91,6 @@
               {% for form in prep_formset %}
                 <tr class="draggable draggable-row border-t">
                   <td class="px-2 py-1 text-center">
-                    <!-- Drag icon -->
                     <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
                     </svg>
@@ -102,9 +101,7 @@
                   <td class="px-2 py-1">{{ form.executor }}</td>
                   <td class="px-2 py-1">{{ form.comments }}</td>
                   <td class="px-2 py-1">
-                    <!-- Delete button -->
                     <button type="button" class="bg-red-500 text-white px-1 py-1 rounded" onclick="deleteRow(this)">Delete</button>
-                    <!-- Save (row) button -->
                     <button type="button" class="bg-blue-500 text-white px-1 py-1 rounded ml-1" onclick="openSaveStepModal(this)">Save</button>
                     {{ form.DELETE.as_hidden|safe }}
                   </td>
@@ -250,7 +247,7 @@
     
   </div>
   
-  <!-- Hidden Template Rows for each section (added Save button in template rows) -->
+  <!-- Hidden Template Rows for each section -->
   <table style="display: none;">
     <tbody>
       <!-- Template for Preparation -->
@@ -346,7 +343,7 @@
     </tbody>
   </table>
   
-  <!-- JavaScript for dynamic row handling, drag & drop, modals, and sidebar toggling -->
+  <!-- JavaScript for row handling, drag & drop, modals, AJAX calls, and sidebar toggling -->
   <script>
     // Function to add a new row for a given prefix ('prep', 'exec', or 'wrap')
     function addRow(prefix) {
@@ -362,7 +359,7 @@
       totalFormsInput.value = formIndex + 1;
     }
     
-    // Function to mark a row as deleted or remove it if new
+    // Function to delete a row (or mark it as deleted)
     function deleteRow(button) {
       const row = button.closest('tr');
       const deleteInput = row.querySelector('input[name$="-DELETE"]');
@@ -374,7 +371,7 @@
       }
     }
     
-    // Update the hidden step_order input for each row in a given tbody
+    // Function to update hidden step_order input for rows in a tbody
     function updateRowOrder(tbodyId, prefix) {
       const tbody = document.getElementById(tbodyId);
       Array.from(tbody.children).forEach((row, index) => {
@@ -407,7 +404,7 @@
       }
     }
     
-    // Shared group configuration for SortableJS
+    // Shared group for SortableJS (drag-and-drop)
     const sharedGroup = { name: 'shared', pull: true, put: true };
     new Sortable(document.getElementById('prep-tbody'), {
       group: sharedGroup,
@@ -428,7 +425,7 @@
       onEnd: function () { updateRowOrder('wrap-tbody', 'wrap'); }
     });
     
-    // Update the hidden "section" field based on the tbody id
+    // Update hidden "section" field based on tbody id when moved across sections
     function updateSectionField(row, newTbodyId) {
       const sectionInput = row.querySelector('input[name*="-section"]');
       if (sectionInput) {
@@ -456,43 +453,164 @@
       content.classList.toggle('hidden');
     }
     
-    // ----- Modal Functions for Saving Step -----
+    // ----- Modal Functions for Saving a Step -----
     function openSaveStepModal(button) {
+      console.log("openSaveStepModal triggered");
       document.getElementById('saveStepModal').classList.remove('hidden');
-      // Optionally store the current row for later use
       window.currentRow = button.closest('tr');
     }
     function closeSaveStepModal() {
+      console.log("closeSaveStepModal triggered");
       document.getElementById('saveStepModal').classList.add('hidden');
     }
     function saveStep() {
+      console.log("saveStep triggered");
       const title = document.getElementById('saveStepTitle').value;
       const description = document.getElementById('saveStepDescription').value;
       const folder = document.getElementById('saveStepFolder').value;
-      // Here you would perform an AJAX call to save window.currentRow's data as a new PredefinedStep
-      console.log("Saving step:", title, description, folder);
-      closeSaveStepModal();
+      console.log("Step modal values:", title, description, folder);
+      const row = window.currentRow;
+      let prefix = row.querySelector('input[name^="prep-"]') ? "prep" :
+                   row.querySelector('input[name^="exec-"]') ? "exec" : "wrap";
+      const data = {
+        name: title,
+        description: description,
+        folder: folder,
+        section: prefix === "prep" ? "preparation" : prefix === "exec" ? "execution" : "wrapup",
+        procedure: row.querySelector('textarea[name*="-procedure"]').value,
+        day_time_duration: row.querySelector('input[name*="-day_time_duration"]').value,
+        nq_duration: row.querySelector('input[name*="-nq_duration"]') ? row.querySelector('input[name*="-nq_duration"]').value : "",
+        executor: row.querySelector('input[name*="-executor"]').value,
+        comments: row.querySelector('textarea[name*="-comments"]').value,
+      };
+      console.log("Sending predefined step data:", data);
+      fetch("{% url 'save_predefined_step' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(response => {
+        console.log("Response received from saveStep fetch:", response);
+        return response.json();
+      })
+      .then(result => {
+        console.log("Result from saveStep fetch:", result);
+        if(result.status === "success"){
+          alert("Step saved successfully!");
+          loadPredefinedSteps();
+        } else {
+          alert("Error saving step: " + result.message);
+        }
+        closeSaveStepModal();
+      })
+      .catch(error => {
+        console.error("Error during saveStep fetch:", error);
+        closeSaveStepModal();
+      });
     }
     
-    // ----- Modal Functions for Saving Template -----
+    // ----- Modal Functions for Saving a Template -----
     function openSaveTemplateModal() {
+      console.log("openSaveTemplateModal triggered");
       document.getElementById('saveTemplateModal').classList.remove('hidden');
     }
     function closeSaveTemplateModal() {
+      console.log("closeSaveTemplateModal triggered");
       document.getElementById('saveTemplateModal').classList.add('hidden');
     }
     function saveTemplate() {
+      console.log("saveTemplate triggered");
       const name = document.getElementById('saveTemplateTitle').value;
       const description = document.getElementById('saveTemplateDescription').value;
       const folder = document.getElementById('saveTemplateFolder').value;
-      // Here you would perform an AJAX call to save the current testplan as a new TestPlanTemplate
-      console.log("Saving template:", name, description, folder);
-      closeSaveTemplateModal();
+      console.log("Template modal values:", name, description, folder);
+      const steps = [];
+      ["prep", "exec", "wrap"].forEach(prefix => {
+        const tbody = document.getElementById(prefix + "-tbody");
+        Array.from(tbody.children).forEach((row, index) => {
+          const stepData = {
+            step_order: index,
+            section: prefix === "prep" ? "preparation" : prefix === "exec" ? "execution" : "wrapup",
+            step: row.querySelector(`input[name^="${prefix}-"][name$="-step"]`).value,
+            procedure: row.querySelector(`textarea[name^="${prefix}-"][name$="-procedure"]`).value,
+            day_time_duration: row.querySelector(`input[name^="${prefix}-"][name$="-day_time_duration"]`).value,
+            nq_duration: row.querySelector(`input[name^="${prefix}-"][name$="-nq_duration"]`) ? row.querySelector(`input[name^="${prefix}-"][name$="-nq_duration"]`).value : "",
+            executor: row.querySelector(`input[name^="${prefix}-"][name$="-executor"]`).value,
+            comments: row.querySelector(`textarea[name^="${prefix}-"][name$="-comments"]`).value,
+          };
+          steps.push(stepData);
+        });
+      });
+      const data = {
+        name: name,
+        description: description,
+        folder: folder,
+        steps: steps
+      };
+      console.log("Sending template data:", data);
+      fetch("{% url 'save_template' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(response => {
+        console.log("Response received from saveTemplate fetch:", response);
+        return response.json();
+      })
+      .then(result => {
+        console.log("Result from saveTemplate fetch:", result);
+        if(result.status === "success"){
+          alert("Template saved successfully!");
+          loadTemplates();
+        } else {
+          alert("Error saving template: " + result.message);
+        }
+        closeSaveTemplateModal();
+      })
+      .catch(error => {
+        console.error("Error during saveTemplate fetch:", error);
+        closeSaveTemplateModal();
+      });
     }
     
-    // ----- Load Library Items with Folder Grouping -----
-    document.addEventListener("DOMContentLoaded", function() {
-      // Load TestPlan Templates (assumes each template JSON includes a "folder" field)
+    // ----- Functions to Reload Library Sidebar Data -----
+    function loadPredefinedSteps() {
+      console.log("Loading predefined steps...");
+      fetch("{% url 'predefined_steps_list' %}")
+        .then(response => response.json())
+        .then(data => {
+          const stepsList = document.getElementById("predefined-steps-list");
+          stepsList.innerHTML = "";
+          const groups = {};
+          data.forEach(step => {
+            const folder = step.folder || 'Ungrouped';
+            if(!groups[folder]) groups[folder] = [];
+            groups[folder].push(step);
+          });
+          Object.keys(groups).forEach(folder => {
+            const folderHeader = document.createElement("div");
+            folderHeader.className = "font-bold text-xs mt-2";
+            folderHeader.textContent = folder;
+            stepsList.appendChild(folderHeader);
+            groups[folder].forEach(step => {
+              let card = document.createElement("div");
+              card.className = "bg-green-100 p-1 rounded cursor-grab hover:bg-green-200 mt-1";
+              card.draggable = true;
+              card.innerHTML = `<strong>${step.name}</strong><br><small>${step.section}</small>`;
+              card.addEventListener("dragstart", function(ev) {
+                ev.dataTransfer.setData("text/plain", JSON.stringify(step));
+              });
+              stepsList.appendChild(card);
+            });
+          });
+        })
+        .catch(error => {
+          console.error("Error loading predefined steps:", error);
+        });
+    }
+    
+    function loadTemplates() {
+      console.log("Loading templates...");
       fetch("{% url 'templates_list' %}")
         .then(response => response.json())
         .then(data => {
@@ -501,7 +619,7 @@
           const groups = {};
           data.forEach(template => {
             const folder = template.folder || 'Ungrouped';
-            if (!groups[folder]) groups[folder] = [];
+            if(!groups[folder]) groups[folder] = [];
             groups[folder].push(template);
           });
           Object.keys(groups).forEach(folder => {
@@ -521,37 +639,16 @@
               templatesList.appendChild(card);
             });
           });
+        })
+        .catch(error => {
+          console.error("Error loading templates:", error);
         });
-      
-      // Load Predefined Steps (assumes each predefined step JSON includes a "folder" field)
-      fetch("{% url 'predefined_steps_list' %}")
-        .then(response => response.json())
-        .then(data => {
-          const stepsList = document.getElementById("predefined-steps-list");
-          stepsList.innerHTML = "";
-          const groups = {};
-          data.forEach(step => {
-            const folder = step.folder || 'Ungrouped';
-            if (!groups[folder]) groups[folder] = [];
-            groups[folder].push(step);
-          });
-          Object.keys(groups).forEach(folder => {
-            const folderHeader = document.createElement("div");
-            folderHeader.className = "font-bold text-xs mt-2";
-            folderHeader.textContent = folder;
-            stepsList.appendChild(folderHeader);
-            groups[folder].forEach(step => {
-              let card = document.createElement("div");
-              card.className = "bg-green-100 p-1 rounded cursor-grab hover:bg-green-200 mt-1";
-              card.draggable = true;
-              card.innerHTML = `<strong>${step.name}</strong><br><small>${step.section}</small>`;
-              card.addEventListener("dragstart", function(ev) {
-                ev.dataTransfer.setData("text/plain", JSON.stringify(step));
-              });
-              stepsList.appendChild(card);
-            });
-          });
-        });
+    }
+    
+    // Load library data on DOMContentLoaded
+    document.addEventListener("DOMContentLoaded", function() {
+      loadTemplates();
+      loadPredefinedSteps();
     });
     
     // Load a template's steps into the form
