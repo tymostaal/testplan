@@ -82,3 +82,12 @@ class PredefinedStep(models.Model):
     
     def __str__(self):
         return self.name
+
+
+class ChecklistResponse(models.Model):
+    testplan = models.ForeignKey('TestPlan', on_delete=models.CASCADE, related_name='checklist_responses')
+    responses = models.JSONField(default=dict)  # Requires Django 3.1+; stores all responses as JSON
+    saved_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Checklist for {self.testplan.title} at {self.saved_at}"

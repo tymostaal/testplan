@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TestPlan Editor</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="container mx-auto p-4">
+    <!-- Navigation Tabs with refined styling -->
+    <div class="mb-4 border-b border-gray-300">
+      <nav class="flex space-x-6">
+        <!-- Checklist tab (inactive here) with auto-save navigation -->
+        <a href="{% url 'new_testplan_checklist' %}?testplan_id={{ testplan_id }}" 
+           onclick="return autoSaveAndNavigate(event, this)" 
+           class="pb-2 text-gray-500 hover:text-gray-700 hover:border-gray-500 font-medium">
+          Checklist
+        </a>
+        <!-- TestPlan Editor tab (active) -->
+        <a href="{% url 'testplan_create' %}?testplan_id={{ testplan_id }}" 
+           class="pb-2 text-blue-600 border-b-2 border-blue-600 font-medium">
+          TestPlan Editor
+        </a>
+      </nav>
+    </div>
+
+    <h1 class="text-2xl font-bold mb-4">TestPlan Editor</h1>
+    <!-- Hidden field to hold the testplan_id -->
+    <input type="hidden" id="testplanId" value="{{ testplan_id }}">
+    
+    <!-- TestPlan Editor Form -->
+    <form id="testplanEditorForm">
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1">Title</label>
+        <input type="text" name="title" class="w-full p-1 border rounded" placeholder="TestPlan Title" value="{{ testplan.title }}">
+      </div>
+      <!-- Additional fields for steps/details can go here -->
+
+      <!-- Action Buttons -->
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button type="button" id="saveTestplanBtn" class="bg-green-500 text-white px-3 py-1 rounded">
+          Save TestPlan
+        </button>
+        <button type="button" onclick="openSaveTemplateModal()" class="bg-blue-500 text-white px-3 py-1 rounded">
+          Save as Template
+        </button>
+        <button type="button" onclick="saveAndFinish()" class="bg-purple-500 text-white px-3 py-1 rounded">
+          Save and Finish
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- JavaScript Section -->
+  <script>
+    // autoSaveAndNavigate:
+    // This function prevents duplicate query parameters by rebuilding the URL.
+    function autoSaveAndNavigate(event, element) {
+      event.preventDefault();
+      // Get the href, split off any existing query string
+      const href = element.getAttribute("href");
+      const baseUrl = href.split('?')[0];
+      // Get the testplan ID from the hidden field
+      const testplanId = document.getElementById("testplanId").value;
+      // Rebuild the URL with the testplan_id parameter
+      const newUrl = baseUrl + "?testplan_id=" + encodeURIComponent(testplanId);
+      // (Optional: you could call auto-save functionality here)
+      window.location.href = newUrl;
+      return false;
+    }
+    
+    // Example saveAndFinish function (you'll need a corresponding backend endpoint)
+    function saveAndFinish() {
+      // Gather data from the form (adjust as needed)
+      const formData = {
+        testplan_id: document.getElementById("testplanId").value,
+        title: document.querySelector('input[name="title"]').value,
+        // Include additional fields as needed...
+      };
+      
+      fetch("{% url 'save_testplan' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(result => {
+        if(result.status === "success"){
+          alert("TestPlan saved successfully!");
+          // Redirect to detail page; adjust URL pattern as needed
+          window.location.href = "{% url 'testplan_detail' pk=0 %}".replace("0", result.testplan_id);
+        } else {
+          alert("Error saving TestPlan: " + result.message);
+        }
+      })
+      .catch(error => {
+        console.error("Error during saveAndFinish:", error);
+        alert("Error saving TestPlan");
+      });
+    }
+    
+    // You can add further JavaScript for saveTestplanBtn and modal functions as needed.
+  </script>
+</body>
+</html>

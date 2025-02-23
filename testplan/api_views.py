@@ -1,9 +1,8 @@
-# testplan/api_views.py
 import json
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from .models import TestPlanTemplate, PredefinedStep, TemplateStep
+from .models import TestPlan, TestPlanTemplate, PredefinedStep, TemplateStep, ChecklistResponse
 
 def templates_list(request):
     templates = list(
@@ -122,3 +121,19 @@ def save_template(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+@csrf_exempt
+def save_checklist(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            responses = data.get('responses')
+            # For simplicity, we create a new TestPlan record here;
+            # In a real scenario, you might tie this to a user session or an existing testplan.
+            testplan = TestPlan.objects.create(title="New TestPlan from Checklist")
+            ChecklistResponse.objects.create(testplan=testplan, responses=responses)
+            return JsonResponse({'status': 'success', 'testplan_id': testplan.id})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)

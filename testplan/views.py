@@ -3,6 +3,11 @@ from django.forms import modelformset_factory
 from django.urls import reverse
 from .models import TestPlan, TestPlanStep
 from .forms import TestPlanStepForm
+# testplan/views.py
+from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from .models import TestPlan
 
 def testplan_create(request):
     # Create formset factories for each section, allowing one extra blank form.
@@ -108,3 +113,19 @@ def testplan_detail(request, pk):
        'wrap_steps': wrap_steps,
     }
     return render(request, 'testplan/testplan_detail.html', context)
+
+
+
+def new_testplan_landing(request):
+    """
+    Landing page that creates a new TestPlan draft and redirects to the checklist page.
+    """
+    # Create a new TestPlan draft record
+    testplan = TestPlan.objects.create(title="Draft TestPlan")
+    # Reverse the URL for new_testplan_checklist and append the query parameter
+    url = reverse('new_testplan_checklist') + f"?testplan_id={testplan.id}"
+    return HttpResponseRedirect(url)
+
+def new_testplan_checklist(request):
+    testplan_id = request.GET.get('testplan_id')
+    return render(request, 'testplan/new_testplan_checklist.html', {'testplan_id': testplan_id})

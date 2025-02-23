@@ -68,6 +68,20 @@
     
     <!-- Main Content -->
     <div id="main-content" class="flex-1 p-2">
+      <div class="mb-4 border-b border-gray-300">
+        <nav class="flex space-x-6">
+          <!-- Active tab -->
+          <a href="{% url 'new_testplan_checklist' %}" class="pb-2 text-blue-600 border-b-2 border-blue-600 font-medium">
+            Checklist
+          </a>
+          <!-- Inactive tab -->
+          <a href="{% url 'testplan_create' %}?testplan_id={{ testplan_id }}" 
+            onclick="return autoSaveAndNavigate(event, this)" 
+            class="pb-2 text-gray-500 hover:text-gray-700 hover:border-gray-500 font-medium">
+            TestPlan Editor
+         </a>
+        </nav>
+      </div>
       <h1 class="text-lg font-bold mb-2">Create TestPlan</h1>
       <form method="post" id="testplan-form">
         {% csrf_token %}

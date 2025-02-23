@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TestPlan Checklist</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="container mx-auto p-4">
+    <!-- Navigation Tabs: Both tabs now include the testplan_id -->
+    <div class="mb-4 border-b border-gray-300">
+      <nav class="flex space-x-6">
+        <!-- Active tab: Checklist -->
+        <a href="{% url 'new_testplan_checklist' %}?testplan_id={{ testplan_id }}" 
+           class="pb-2 text-blue-600 border-b-2 border-blue-600 font-medium">
+          Checklist
+        </a>
+        <!-- Inactive tab: TestPlan Editor with auto-save -->
+        <a href="{% url 'testplan_create' %}?testplan_id={{ testplan_id }}" 
+           onclick="return autoSaveAndNavigate(event, this)" 
+           class="pb-2 text-gray-500 hover:text-gray-700 hover:border-gray-500 font-medium">
+          TestPlan Editor
+        </a>
+      </nav>
+    </div>
+    
+    <h1 class="text-2xl font-bold mb-4">TestPlan Checklist</h1>
+    <!-- Hidden field to hold testplan_id -->
+    <input type="hidden" id="testplanId" value="{{ testplan_id }}">
+    
+    <!-- Checklist Table (each row: Category, Question, Reference, Answer) -->
+    <table class="min-w-full bg-white">
+      <thead>
+        <tr>
+          <th class="border px-4 py-2">Category</th>
+          <th class="border px-4 py-2">Question</th>
+          <th class="border px-4 py-2">Reference</th>
+          <th class="border px-4 py-2">Answer</th>
+        </tr>
+      </thead>
+      <tbody id="checklistTableBody">
+        <!-- Example rows. (You can add all your questions here.) -->
+        <tr class="hover:bg-gray-100 transition-colors">
+          <td class="border px-4 py-2">Support</td>
+          <td class="border px-4 py-2">What kind of assistance do you require from SI-PE?</td>
+          <td class="border px-4 py-2"><!-- Reference: leave empty for now --></td>
+          <td class="border px-4 py-2">
+            <input type="text" class="w-full p-1 border rounded" placeholder="Your answer">
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-100 transition-colors">
+          <td class="border px-4 py-2">Support</td>
+          <td class="border px-4 py-2">Is Workcenter / FLS / FASY / VIS support needed? Make sure the support is arranged.</td>
+          <td class="border px-4 py-2"></td>
+          <td class="border px-4 py-2">
+            <input type="text" class="w-full p-1 border rounded" placeholder="Your answer">
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-100 transition-colors">
+          <td class="border px-4 py-2">Safety</td>
+          <td class="border px-4 py-2">Are there specific risks associated with this claim?</td>
+          <td class="border px-4 py-2"></td>
+          <td class="border px-4 py-2">
+            <input type="text" class="w-full p-1 border rounded" placeholder="Your answer">
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-100 transition-colors">
+          <td class="border px-4 py-2">Safety</td>
+          <td class="border px-4 py-2">Are Safety overrides involved? Who will arrange it?</td>
+          <td class="border px-4 py-2"></td>
+          <td class="border px-4 py-2">
+            <input type="text" class="w-full p-1 border rounded" placeholder="Your answer">
+          </td>
+        </tr>
+        <!-- Add more rows for all remaining questions -->
+      </tbody>
+    </table>
+    
+    <!-- Navigation Button: Save and Next -->
+    <div class="mt-4 flex justify-end">
+      <button id="saveChecklistBtn" class="bg-blue-500 text-white px-4 py-2 rounded">
+        Save and Next
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    // Collect all checklist responses along with testplan_id
+    function collectChecklistData() {
+      const responses = [];
+      const rows = document.querySelectorAll("#checklistTableBody tr");
+      rows.forEach(row => {
+        const category = row.children[0].textContent.trim();
+        const question = row.children[1].textContent.trim();
+        const reference = row.children[2].textContent.trim();
+        const answerInput = row.children[3].querySelector("input");
+        const answer = answerInput ? answerInput.value : "";
+        responses.push({ category, question, reference, answer });
+      });
+      return {
+        testplan_id: document.getElementById("testplanId").value,
+        responses: responses
+      };
+    }
+    
+    // Save checklist responses via AJAX
+    function saveChecklistData() {
+      return new Promise((resolve, reject) => {
+        const data = collectChecklistData();
+        fetch("{% url 'save_checklist' %}", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.status === "success") {
+            console.log("Checklist save successful", result);
+            resolve(result);
+          } else {
+            reject(result.message);
+          }
+        })
+        .catch(error => reject(error));
+      });
+    }
+    
+    // When clicking on a tab, auto-save then navigate
+    function autoSaveAndNavigate(event, element) {
+      event.preventDefault();
+      saveChecklistData()
+      .then(result => {
+        // Navigate to target URL; ensure testplan_id is passed
+        window.location.href = element.getAttribute("href") + "?testplan_id=" + document.getElementById("testplanId").value;
+      })
+      .catch(error => {
+        alert("Error saving checklist: " + error);
+      });
+      return false;
+    }
+    
+    // Manual "Save and Next" button handler
+    document.getElementById("saveChecklistBtn").addEventListener("click", function(){
+      saveChecklistData()
+      .then(result => {
+        alert("Save successful!");
+        window.location.href = "{% url 'testplan_create' %}?testplan_id=" + document.getElementById("testplanId").value;
+      })
+      .catch(error => {
+        alert("Error saving checklist: " + error);
+      });
+    });
+  </script>
+</body>
+</html>
