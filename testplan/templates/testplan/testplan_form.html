@@ -1,260 +1,292 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Create TestPlan</title>
+  <title>Create TestPlan with Library</title>
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Include SortableJS -->
+  <!-- Include SortableJS for drag-and-drop -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <style>
+    /* Make draggable rows show a grab cursor (except for inputs/buttons) */
+    tr.draggable:hover {
+      cursor: grab;
+    }
+    tr.draggable:active {
+      cursor: grabbing;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 p-6">
-  <div class="container mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Create TestPlan</h1>
-    <form method="post" id="testplan-form">
-      {% csrf_token %}
-      
-      <!-- PREPARATION STEPS SECTION -->
-      <div class="mb-8 bg-white shadow rounded p-4">
-        <h2 class="text-2xl font-semibold mb-4">Preparation Steps</h2>
-        <table class="min-w-full table-auto" id="prep-table">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="px-2 py-2 text-center">Drag</th>
-              <th class="px-4 py-2">Step</th>
-              <th class="px-4 py-2">Procedure</th>
-              <th class="px-4 py-2">Day/Time Duration</th>
-              <th class="px-4 py-2">NQ Duration</th>
-              <th class="px-4 py-2">Executor</th>
-              <th class="px-4 py-2">Comments</th>
-              <th class="px-4 py-2">Delete</th>
-            </tr>
-          </thead>
-          <tbody id="prep-tbody">
-            {% for form in prep_formset %}
-              <tr class="prep-row border-t">
-                <td class="px-2 py-2 text-center cursor-move">
-                  <!-- Drag Handle Icon -->
-                  <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
-                  </svg>
-                </td>
-                <td class="px-4 py-2">{{ form.step }}</td>
-                <td class="px-4 py-2">{{ form.procedure }}</td>
-                <td class="px-4 py-2">{{ form.day_time_duration }}</td>
-                <td class="px-4 py-2">{{ form.nq_duration }}</td>
-                <td class="px-4 py-2">{{ form.executor }}</td>
-                <td class="px-4 py-2">{{ form.comments }}</td>
-                <td class="px-4 py-2">
-                  <button type="button" class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteRow(this)">Delete</button>
-                  {{ form.DELETE.as_hidden }}
-                </td>
+<body class="bg-gray-100 text-xs">
+  <div class="flex min-h-screen">
+    <!-- Main Content: TestPlan Form (Left Side) -->
+    <div id="main-content" class="flex-1 p-2">
+      <h1 class="text-lg font-bold mb-2">Create TestPlan</h1>
+      <form method="post" id="testplan-form">
+        {% csrf_token %}
+        
+        <!-- PREPARATION STEPS SECTION -->
+        <div class="mb-2 bg-white shadow rounded p-2">
+          <h2 class="text-base font-semibold mb-1">Preparation Steps</h2>
+          <table class="min-w-full table-auto border-collapse" id="prep-table">
+            <thead>
+              <tr class="bg-gray-200">
+                <th class="px-2 py-1">Drag</th>
+                <th class="px-2 py-1">Step</th>
+                <th class="px-2 py-1">Procedure</th>
+                <th class="px-2 py-1">Duration</th>
+                <th class="px-2 py-1">Executor</th>
+                <th class="px-2 py-1">Comments</th>
+                <th class="px-2 py-1">Delete</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div class="mt-4">
-          <button type="button" class="bg-blue-500 text-white px-4 py-2 rounded" onclick="addRow('prep')">Add Step</button>
+            </thead>
+            <tbody id="prep-tbody" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'prep')">
+              {% for form in prep_formset %}
+                <tr class="draggable draggable-row border-t">
+                  <td class="px-2 py-1 text-center">
+                    <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
+                    </svg>
+                  </td>
+                  <td class="px-2 py-1">{{ form.step }}</td>
+                  <td class="px-2 py-1">{{ form.procedure }}</td>
+                  <td class="px-2 py-1">{{ form.day_time_duration }}</td>
+                  <td class="px-2 py-1">{{ form.executor }}</td>
+                  <td class="px-2 py-1">{{ form.comments }}</td>
+                  <td class="px-2 py-1">
+                    <button type="button" class="bg-red-500 text-white px-1 py-1 rounded" onclick="deleteRow(this)">Delete</button>
+                    {{ form.DELETE.as_hidden|safe }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="mt-1">
+            <button type="button" class="bg-blue-500 text-white px-1 py-1 rounded" onclick="addRow('prep')">Add Step</button>
+          </div>
+          {{ prep_formset.management_form }}
         </div>
-        {{ prep_formset.management_form }}
-      </div>
-      
-      <!-- EXECUTION STEPS SECTION -->
-      <div class="mb-8 bg-white shadow rounded p-4">
-        <h2 class="text-2xl font-semibold mb-4">Execution Steps</h2>
-        <table class="min-w-full table-auto" id="exec-table">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="px-2 py-2 text-center">Drag</th>
-              <th class="px-4 py-2">Step</th>
-              <th class="px-4 py-2">Procedure</th>
-              <th class="px-4 py-2">Day/Time Duration</th>
-              <th class="px-4 py-2">NQ Duration</th>
-              <th class="px-4 py-2">Executor</th>
-              <th class="px-4 py-2">Comments</th>
-              <th class="px-4 py-2">Delete</th>
-            </tr>
-          </thead>
-          <tbody id="exec-tbody">
-            {% for form in exec_formset %}
-              <tr class="exec-row border-t">
-                <td class="px-2 py-2 text-center cursor-move">
-                  <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
-                  </svg>
-                </td>
-                <td class="px-4 py-2">{{ form.step }}</td>
-                <td class="px-4 py-2">{{ form.procedure }}</td>
-                <td class="px-4 py-2">{{ form.day_time_duration }}</td>
-                <td class="px-4 py-2">{{ form.nq_duration }}</td>
-                <td class="px-4 py-2">{{ form.executor }}</td>
-                <td class="px-4 py-2">{{ form.comments }}</td>
-                <td class="px-4 py-2">
-                  <button type="button" class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteRow(this)">Delete</button>
-                  {{ form.DELETE.as_hidden }}
-                </td>
+        
+        <!-- EXECUTION STEPS SECTION -->
+        <div class="mb-2 bg-white shadow rounded p-2">
+          <h2 class="text-base font-semibold mb-1">Execution Steps</h2>
+          <table class="min-w-full table-auto border-collapse" id="exec-table">
+            <thead>
+              <tr class="bg-gray-200">
+                <th class="px-2 py-1">Drag</th>
+                <th class="px-2 py-1">Step</th>
+                <th class="px-2 py-1">Procedure</th>
+                <th class="px-2 py-1">Duration</th>
+                <th class="px-2 py-1">Executor</th>
+                <th class="px-2 py-1">Comments</th>
+                <th class="px-2 py-1">Delete</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div class="mt-4">
-          <button type="button" class="bg-blue-500 text-white px-4 py-2 rounded" onclick="addRow('exec')">Add Step</button>
+            </thead>
+            <tbody id="exec-tbody" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'exec')">
+              {% for form in exec_formset %}
+                <tr class="draggable draggable-row border-t">
+                  <td class="px-2 py-1 text-center">
+                    <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
+                    </svg>
+                  </td>
+                  <td class="px-2 py-1">{{ form.step }}</td>
+                  <td class="px-2 py-1">{{ form.procedure }}</td>
+                  <td class="px-2 py-1">{{ form.day_time_duration }}</td>
+                  <td class="px-2 py-1">{{ form.executor }}</td>
+                  <td class="px-2 py-1">{{ form.comments }}</td>
+                  <td class="px-2 py-1">
+                    <button type="button" class="bg-red-500 text-white px-1 py-1 rounded" onclick="deleteRow(this)">Delete</button>
+                    {{ form.DELETE.as_hidden|safe }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="mt-1">
+            <button type="button" class="bg-blue-500 text-white px-1 py-1 rounded" onclick="addRow('exec')">Add Step</button>
+          </div>
+          {{ exec_formset.management_form }}
         </div>
-        {{ exec_formset.management_form }}
-      </div>
-      
-      <!-- WRAP-UP STEPS SECTION -->
-      <div class="mb-8 bg-white shadow rounded p-4">
-        <h2 class="text-2xl font-semibold mb-4">Wrap-Up Steps</h2>
-        <table class="min-w-full table-auto" id="wrap-table">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="px-2 py-2 text-center">Drag</th>
-              <th class="px-4 py-2">Step</th>
-              <th class="px-4 py-2">Procedure</th>
-              <th class="px-4 py-2">Day/Time Duration</th>
-              <th class="px-4 py-2">NQ Duration</th>
-              <th class="px-4 py-2">Executor</th>
-              <th class="px-4 py-2">Comments</th>
-              <th class="px-4 py-2">Delete</th>
-            </tr>
-          </thead>
-          <tbody id="wrap-tbody">
-            {% for form in wrap_formset %}
-              <tr class="wrap-row border-t">
-                <td class="px-2 py-2 text-center cursor-move">
-                  <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
-                  </svg>
-                </td>
-                <td class="px-4 py-2">{{ form.step }}</td>
-                <td class="px-4 py-2">{{ form.procedure }}</td>
-                <td class="px-4 py-2">{{ form.day_time_duration }}</td>
-                <td class="px-4 py-2">{{ form.nq_duration }}</td>
-                <td class="px-4 py-2">{{ form.executor }}</td>
-                <td class="px-4 py-2">{{ form.comments }}</td>
-                <td class="px-4 py-2">
-                  <button type="button" class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteRow(this)">Delete</button>
-                  {{ form.DELETE.as_hidden }}
-                </td>
+        
+        <!-- WRAP-UP STEPS SECTION -->
+        <div class="mb-2 bg-white shadow rounded p-2">
+          <h2 class="text-base font-semibold mb-1">Wrap-Up Steps</h2>
+          <table class="min-w-full table-auto border-collapse" id="wrap-table">
+            <thead>
+              <tr class="bg-gray-200">
+                <th class="px-2 py-1">Drag</th>
+                <th class="px-2 py-1">Step</th>
+                <th class="px-2 py-1">Procedure</th>
+                <th class="px-2 py-1">Duration</th>
+                <th class="px-2 py-1">Executor</th>
+                <th class="px-2 py-1">Comments</th>
+                <th class="px-2 py-1">Delete</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div class="mt-4">
-          <button type="button" class="bg-blue-500 text-white px-4 py-2 rounded" onclick="addRow('wrap')">Add Step</button>
+            </thead>
+            <tbody id="wrap-tbody" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'wrap')">
+              {% for form in wrap_formset %}
+                <tr class="draggable draggable-row border-t">
+                  <td class="px-2 py-1 text-center">
+                    <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
+                    </svg>
+                  </td>
+                  <td class="px-2 py-1">{{ form.step }}</td>
+                  <td class="px-2 py-1">{{ form.procedure }}</td>
+                  <td class="px-2 py-1">{{ form.day_time_duration }}</td>
+                  <td class="px-2 py-1">{{ form.executor }}</td>
+                  <td class="px-2 py-1">{{ form.comments }}</td>
+                  <td class="px-2 py-1">
+                    <button type="button" class="bg-red-500 text-white px-1 py-1 rounded" onclick="deleteRow(this)">Delete</button>
+                    {{ form.DELETE.as_hidden|safe }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="mt-1">
+            <button type="button" class="bg-blue-500 text-white px-1 py-1 rounded" onclick="addRow('wrap')">Add Step</button>
+          </div>
+          {{ wrap_formset.management_form }}
         </div>
-        {{ wrap_formset.management_form }}
-      </div>
-      
-      <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded">Save TestPlan</button>
-    </form>
+        <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded">Save TestPlan</button>
+      </form>
+    </div>
     
-    <!-- Hidden Template Rows for each section -->
-    <table style="display: none;">
-      <tbody>
-        <!-- Template for Preparation -->
-        <tr id="prep-template" class="prep-row border-t">
-          <td class="px-2 py-2 text-center cursor-move">
-            <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
-            </svg>
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="prep-__prefix__-step" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <textarea name="prep-__prefix__-procedure" class="w-full border border-gray-300 rounded px-2 py-1 resize-y" rows="1"></textarea>
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="prep-__prefix__-day_time_duration" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="prep-__prefix__-nq_duration" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="prep-__prefix__-executor" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <textarea name="prep-__prefix__-comments" class="w-full border border-gray-300 rounded px-2 py-1 resize-y" rows="1"></textarea>
-          </td>
-          <td class="px-4 py-2">
-            <button type="button" class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteRow(this)">Delete</button>
-            <input type="hidden" name="prep-__prefix__-DELETE" id="id_prep-__prefix__-DELETE">
-          </td>
-          <input type="hidden" name="prep-__prefix__-section" value="preparation">
-          <input type="hidden" name="prep-__prefix__-step_order" value="0">
-        </tr>
-        <!-- Template for Execution -->
-        <tr id="exec-template" class="exec-row border-t">
-          <td class="px-2 py-2 text-center cursor-move">
-            <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
-            </svg>
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="exec-__prefix__-step" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <textarea name="exec-__prefix__-procedure" class="w-full border border-gray-300 rounded px-2 py-1 resize-y" rows="1"></textarea>
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="exec-__prefix__-day_time_duration" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="exec-__prefix__-nq_duration" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="exec-__prefix__-executor" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <textarea name="exec-__prefix__-comments" class="w-full border border-gray-300 rounded px-2 py-1 resize-y" rows="1"></textarea>
-          </td>
-          <td class="px-4 py-2">
-            <button type="button" class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteRow(this)">Delete</button>
-            <input type="hidden" name="exec-__prefix__-DELETE" id="id_exec-__prefix__-DELETE">
-          </td>
-          <input type="hidden" name="exec-__prefix__-section" value="execution">
-          <input type="hidden" name="exec-__prefix__-step_order" value="0">
-        </tr>
-        <!-- Template for Wrap-Up -->
-        <tr id="wrap-template" class="wrap-row border-t">
-          <td class="px-2 py-2 text-center cursor-move">
-            <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm4-8a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
-            </svg>
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="wrap-__prefix__-step" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <textarea name="wrap-__prefix__-procedure" class="w-full border border-gray-300 rounded px-2 py-1 resize-y" rows="1"></textarea>
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="wrap-__prefix__-day_time_duration" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="wrap-__prefix__-nq_duration" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <input type="text" name="wrap-__prefix__-executor" class="w-full border border-gray-300 rounded px-2 py-1" value="">
-          </td>
-          <td class="px-4 py-2">
-            <textarea name="wrap-__prefix__-comments" class="w-full border border-gray-300 rounded px-2 py-1 resize-y" rows="1"></textarea>
-          </td>
-          <td class="px-4 py-2">
-            <button type="button" class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteRow(this)">Delete</button>
-            <input type="hidden" name="wrap-__prefix__-DELETE" id="id_wrap-__prefix__-DELETE">
-          </td>
-          <input type="hidden" name="wrap-__prefix__-section" value="wrapup">
-          <input type="hidden" name="wrap-__prefix__-step_order" value="0">
-        </tr>
-      </tbody>
-    </table>
+    <!-- Sidebar on the Right (Library) -->
+    <div id="sidebar" class="w-1/5 bg-white border-l p-2 relative">
+      <!-- Sidebar Toggle Handle: Always visible, larger, with sideways arrow -->
+      <div id="sidebar-toggle" class="absolute -left-8 top-1/2 transform -translate-y-1/2 bg-gray-300 rounded-full p-2 cursor-pointer"
+           onclick="toggleSidebar()">
+        <!-- Updated arrow icon: Initially, sidebar is visible so arrow points left (to collapse it) -->
+        <svg id="toggle-arrow" class="w-6 h-6 text-gray-700 transform transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+          <!-- Arrow pointing left -->
+          <path d="M12.293 16.293a1 1 0 010-1.414L15.586 11H4a1 1 0 110-2h11.586l-3.293-3.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"/>
+        </svg>
+      </div>
+      <div id="library-content" class="ml-2">
+        <!-- Accordion for Templates -->
+        <div class="mb-2">
+          <div class="folder-header cursor-pointer bg-gray-300 p-1 rounded" onclick="toggleFolder(this)">
+            <span class="font-bold text-xs">Templates</span>
+          </div>
+          <div class="folder-content pl-2 mt-1">
+            <div id="templates-list" class="space-y-1 overflow-y-auto max-h-48">
+              <p class="text-gray-500 text-xs">Loading templates...</p>
+            </div>
+          </div>
+        </div>
+        <!-- Accordion for Predefined Steps -->
+        <div class="mb-2">
+          <div class="folder-header cursor-pointer bg-gray-300 p-1 rounded" onclick="toggleFolder(this)">
+            <span class="font-bold text-xs">Predefined Steps</span>
+          </div>
+          <div class="folder-content pl-2 mt-1 hidden">
+            <div id="predefined-steps-list" class="space-y-1 overflow-y-auto max-h-48">
+              <p class="text-gray-500 text-xs">Loading predefined steps...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   
-  <!-- JavaScript for dynamic row addition, deletion, and drag & drop reordering -->
+  <!-- Hidden Template Rows for each section -->
+  <table style="display: none;">
+    <tbody>
+      <!-- Template for Preparation -->
+      <tr id="prep-template" class="draggable draggable-row border-t">
+        <td class="px-2 py-2 text-center cursor-grab">
+          <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
+          </svg>
+        </td>
+        <td class="px-2 py-2">
+          <input type="text" name="prep-__prefix__-step" class="w-full border border-gray-300 rounded px-1 py-1" value="">
+        </td>
+        <td class="px-2 py-2">
+          <textarea name="prep-__prefix__-procedure" class="w-full border border-gray-300 rounded px-1 py-1 resize-y" rows="1"></textarea>
+        </td>
+        <td class="px-2 py-2">
+          <input type="text" name="prep-__prefix__-day_time_duration" class="w-full border border-gray-300 rounded px-1 py-1" value="">
+        </td>
+        <td class="px-2 py-2">
+          <input type="text" name="prep-__prefix__-executor" class="w-full border border-gray-300 rounded px-1 py-1" value="">
+        </td>
+        <td class="px-2 py-2">
+          <textarea name="prep-__prefix__-comments" class="w-full border border-gray-300 rounded px-1 py-1 resize-y" rows="1"></textarea>
+        </td>
+        <td class="px-2 py-2">
+          <button type="button" class="bg-red-500 text-white px-1 py-1 rounded" onclick="deleteRow(this)">Delete</button>
+          <input type="hidden" name="prep-__prefix__-DELETE" id="id_prep-__prefix__-DELETE" style="display:none;">
+        </td>
+        <input type="hidden" name="prep-__prefix__-section" value="preparation">
+        <input type="hidden" name="prep-__prefix__-step_order" value="0">
+      </tr>
+      <!-- Template for Execution -->
+      <tr id="exec-template" class="draggable draggable-row border-t">
+        <td class="px-2 py-2 text-center cursor-grab">
+          <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
+          </svg>
+        </td>
+        <td class="px-2 py-2">
+          <input type="text" name="exec-__prefix__-step" class="w-full border border-gray-300 rounded px-1 py-1" value="">
+        </td>
+        <td class="px-2 py-2">
+          <textarea name="exec-__prefix__-procedure" class="w-full border border-gray-300 rounded px-1 py-1 resize-y" rows="1"></textarea>
+        </td>
+        <td class="px-2 py-2">
+          <input type="text" name="exec-__prefix__-day_time_duration" class="w-full border border-gray-300 rounded px-1 py-1" value="">
+        </td>
+        <td class="px-2 py-2">
+          <input type="text" name="exec-__prefix__-executor" class="w-full border border-gray-300 rounded px-1 py-1" value="">
+        </td>
+        <td class="px-2 py-2">
+          <textarea name="exec-__prefix__-comments" class="w-full border border-gray-300 rounded px-1 py-1 resize-y" rows="1"></textarea>
+        </td>
+        <td class="px-2 py-2">
+          <button type="button" class="bg-red-500 text-white px-1 py-1 rounded" onclick="deleteRow(this)">Delete</button>
+          <input type="hidden" name="exec-__prefix__-DELETE" id="id_exec-__prefix__-DELETE" style="display:none;">
+        </td>
+        <input type="hidden" name="exec-__prefix__-section" value="execution">
+        <input type="hidden" name="exec-__prefix__-step_order" value="0">
+      </tr>
+      <!-- Template for Wrap-Up -->
+      <tr id="wrap-template" class="draggable draggable-row border-t">
+        <td class="px-2 py-2 text-center cursor-grab">
+          <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M3 7a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z"/>
+          </svg>
+        </td>
+        <td class="px-2 py-2">
+          <input type="text" name="wrap-__prefix__-step" class="w-full border border-gray-300 rounded px-1 py-1" value="">
+        </td>
+        <td class="px-2 py-2">
+          <textarea name="wrap-__prefix__-procedure" class="w-full border border-gray-300 rounded px-1 py-1 resize-y" rows="1"></textarea>
+        </td>
+        <td class="px-2 py-2">
+          <input type="text" name="wrap-__prefix__-day_time_duration" class="w-full border border-gray-300 rounded px-1 py-1" value="">
+        </td>
+        <td class="px-2 py-2">
+          <input type="text" name="wrap-__prefix__-executor" class="w-full border border-gray-300 rounded px-1 py-1" value="">
+        </td>
+        <td class="px-2 py-2">
+          <textarea name="wrap-__prefix__-comments" class="w-full border border-gray-300 rounded px-1 py-1 resize-y" rows="1"></textarea>
+        </td>
+        <td class="px-2 py-2">
+          <button type="button" class="bg-red-500 text-white px-1 py-1 rounded" onclick="deleteRow(this)">Delete</button>
+          <input type="hidden" name="wrap-__prefix__-DELETE" id="id_wrap-__prefix__-DELETE" style="display:none;">
+        </td>
+        <input type="hidden" name="wrap-__prefix__-section" value="wrapup">
+        <input type="hidden" name="wrap-__prefix__-step_order" value="0">
+      </tr>
+    </tbody>
+  </table>
+  
+  <!-- JavaScript for dynamic row addition, deletion, drag & drop, external drop, and sidebar toggle -->
   <script>
-    // Function to add a new row for the given prefix ('prep', 'exec', or 'wrap')
+    // Function to add a new row for a given prefix ('prep', 'exec', or 'wrap')
     function addRow(prefix) {
       const tbody = document.getElementById(prefix + '-tbody');
       const totalFormsInput = document.querySelector(`input[name="${prefix}-TOTAL_FORMS"]`);
@@ -266,7 +298,7 @@
       newRow.removeAttribute('id'); // Remove duplicate id
       newRow.style.display = ''; // Make it visible
       
-      // Replace all instances of __prefix__ with the current formIndex
+      // Replace all instances of __prefix__ with the current form index
       newRow.innerHTML = newRow.innerHTML.replace(new RegExp(prefix + '-__prefix__-', 'g'), prefix + '-' + formIndex + '-');
       
       tbody.appendChild(newRow);
@@ -296,7 +328,30 @@
       });
     }
     
-    // Shared group configuration for cross-container dragging
+    // Allow drop on table bodies (for external draggable items)
+    function allowDrop(ev) {
+      ev.preventDefault();
+    }
+    
+    // Handle drop event for external predefined steps
+    function handleDrop(ev, prefix) {
+      ev.preventDefault();
+      let data = ev.dataTransfer.getData("text/plain");
+      if (data) {
+        let stepData = JSON.parse(data);
+        addRow(prefix);
+        let tbody = document.getElementById(prefix + '-tbody');
+        let newRow = tbody.lastElementChild;
+        newRow.querySelector(`input[name^="${prefix}-"][name$="-step"]`).value = stepData.name;
+        newRow.querySelector(`textarea[name^="${prefix}-"][name$="-procedure"]`).value = stepData.procedure;
+        newRow.querySelector(`input[name^="${prefix}-"][name$="-day_time_duration"]`).value = stepData.day_time_duration;
+        newRow.querySelector(`input[name^="${prefix}-"][name$="-nq_duration"]`).value = stepData.nq_duration;
+        newRow.querySelector(`input[name^="${prefix}-"][name$="-executor"]`).value = stepData.executor;
+        newRow.querySelector(`textarea[name^="${prefix}-"][name$="-comments"]`).value = stepData.comments;
+      }
+    }
+    
+    // Shared group configuration for internal drag-and-drop (across sections)
     const sharedGroup = { name: 'shared', pull: true, put: true };
     
     // Initialize SortableJS for each tbody with shared group
@@ -345,6 +400,100 @@
           sectionInput.value = 'wrapup';
         }
       }
+    }
+    
+    // Toggle sidebar: always leave a small toggle bar visible; arrow points left when expanded and right when collapsed.
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar.classList.contains('w-1/5')) {
+        // Collapse sidebar
+        sidebar.classList.remove('w-1/5');
+        sidebar.classList.add('w-0');
+      } else {
+        // Expand sidebar
+        sidebar.classList.remove('w-0');
+        sidebar.classList.add('w-1/5');
+      }
+      const arrow = document.getElementById('toggle-arrow');
+      arrow.classList.toggle('rotate-180');
+    }
+    
+    // Toggle folder content in the sidebar
+    function toggleFolder(header) {
+      const content = header.nextElementSibling;
+      content.classList.toggle('hidden');
+    }
+    
+    // Load Templates and Predefined Steps from API endpoints on DOMContentLoaded
+    document.addEventListener("DOMContentLoaded", function() {
+      // Load TestPlan Templates
+      fetch("{% url 'templates_list' %}")
+        .then(response => response.json())
+        .then(data => {
+          const templatesList = document.getElementById("templates-list");
+          templatesList.innerHTML = "";
+          data.forEach(template => {
+            let card = document.createElement("div");
+            card.className = "bg-blue-100 p-1 rounded cursor-pointer hover:bg-blue-200";
+            card.innerHTML = `<strong>${template.name}</strong><br><small>${template.description}</small>`;
+            card.onclick = function() {
+              fetch("{% url 'load_template' 0 %}".replace("0", template.id))
+                .then(resp => resp.json())
+                .then(templateData => {
+                  loadTemplateIntoForm(templateData);
+                });
+            };
+            templatesList.appendChild(card);
+          });
+        });
+      
+      // Load Predefined Steps
+      fetch("{% url 'predefined_steps_list' %}")
+        .then(response => response.json())
+        .then(data => {
+          const stepsList = document.getElementById("predefined-steps-list");
+          stepsList.innerHTML = "";
+          data.forEach(step => {
+            let card = document.createElement("div");
+            card.className = "bg-green-100 p-1 rounded cursor-grab hover:bg-green-200";
+            card.draggable = true;
+            card.innerHTML = `<strong>${step.name}</strong><br><small>${step.section}</small>`;
+            card.addEventListener("dragstart", function(ev) {
+              ev.dataTransfer.setData("text/plain", JSON.stringify(step));
+            });
+            stepsList.appendChild(card);
+          });
+        });
+    });
+    
+    // Function to load a template's steps into the form
+    function loadTemplateIntoForm(templateData) {
+      // Clear current rows in each section and reset TOTAL_FORMS
+      ["prep", "exec", "wrap"].forEach(prefix => {
+        const tbody = document.getElementById(prefix + "-tbody");
+        tbody.innerHTML = "";
+        document.querySelector(`input[name="${prefix}-TOTAL_FORMS"]`).value = 0;
+      });
+      // For each step in the template, add a row in the appropriate section
+      templateData.steps.forEach(step => {
+        let prefix;
+        if (step.section === "preparation") {
+          prefix = "prep";
+        } else if (step.section === "execution") {
+          prefix = "exec";
+        } else if (step.section === "wrapup") {
+          prefix = "wrap";
+        }
+        addRow(prefix);
+        let tbody = document.getElementById(prefix + "-tbody");
+        let newRow = tbody.lastElementChild;
+        newRow.querySelector(`input[name^="${prefix}-"][name$="-step"]`).value = step.step;
+        newRow.querySelector(`textarea[name^="${prefix}-"][name$="-procedure"]`).value = step.procedure;
+        newRow.querySelector(`input[name^="${prefix}-"][name$="-day_time_duration"]`).value = step.day_time_duration;
+        newRow.querySelector(`input[name^="${prefix}-"][name$="-nq_duration"]`).value = step.nq_duration;
+        newRow.querySelector(`input[name^="${prefix}-"][name$="-executor"]`).value = step.executor;
+        newRow.querySelector(`textarea[name^="${prefix}-"][name$="-comments"]`).value = step.comments;
+      });
     }
   </script>
 </body>
