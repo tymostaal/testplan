@@ -15,9 +15,7 @@ class TestPlanStep(models.Model):
         ('execution', 'Execution Steps'),
         ('wrapup', 'Wrap-Up Steps'),
     )
-    testplan = models.ForeignKey(
-        TestPlan, on_delete=models.CASCADE, related_name='steps'
-    )
+    testplan = models.ForeignKey(TestPlan, on_delete=models.CASCADE, related_name='steps')
     step_order = models.PositiveIntegerField(default=0)
     section = models.CharField(max_length=20, choices=SECTION_CHOICES)
     step = models.CharField(max_length=255)
@@ -37,6 +35,7 @@ class TestPlanStep(models.Model):
 class TestPlanTemplate(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    folder = models.CharField(max_length=255, blank=True, default="")  # NEW: Folder field for grouping templates
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -48,9 +47,7 @@ class TemplateStep(models.Model):
         ('execution', 'Execution Steps'),
         ('wrapup', 'Wrap-Up Steps'),
     )
-    template = models.ForeignKey(
-        TestPlanTemplate, on_delete=models.CASCADE, related_name='steps'
-    )
+    template = models.ForeignKey(TestPlanTemplate, on_delete=models.CASCADE, related_name='steps')
     step_order = models.PositiveIntegerField(default=0)
     section = models.CharField(max_length=20, choices=SECTION_CHOICES)
     step = models.CharField(max_length=255)
@@ -75,6 +72,7 @@ class PredefinedStep(models.Model):
     )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    folder = models.CharField(max_length=255, blank=True, default="")  # NEW: Folder field for grouping predefined steps
     section = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     procedure = models.TextField(blank=True)
     day_time_duration = models.CharField(max_length=100, blank=True)

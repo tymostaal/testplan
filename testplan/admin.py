@@ -24,10 +24,13 @@ class TemplateStepInline(admin.TabularInline):
     fields = ('section', 'step_order', 'step', 'procedure', 'day_time_duration', 'nq_duration', 'executor', 'comments')
 
 class TestPlanTemplateAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_at')
+    list_display = ('name', 'folder', 'created_at')  # added folder here
     inlines = [TemplateStepInline]
 
 admin.site.register(TestPlanTemplate, TestPlanTemplateAdmin)
 
-# Predefined Steps can be registered directly
-admin.site.register(PredefinedStep)
+# For PredefinedStep, create a custom admin to show the folder
+class PredefinedStepAdmin(admin.ModelAdmin):
+    list_display = ('name', 'folder', 'section')
+
+admin.site.register(PredefinedStep, PredefinedStepAdmin)
